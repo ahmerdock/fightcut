@@ -1,0 +1,17 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Generated analysis, review sheets and rendered output
+work/
+
+# Source and output videos (large files, not for git)
+*.mp4
+*.mov
+*.mkv
+*.m4v
+*.wav
+
+# macOS
+.DS_Store
