@@ -53,6 +53,12 @@ P = dict(
     burst_n=3,           # >= this many clangs ...
     burst_win=6.0,       # ... within this many seconds = fighting has started
     burst_lead=2.0,      # start the round this long before the first clang of the burst
+    # "Lull" = a break shown without cutting to the wide shot (the director stays on a
+    # cage-side camera while the corners work). Still picture + no clangs, sustained.
+    lull_win=10.0,       # look this many seconds either side for clangs
+    lull_clangs=1,       # at most this many clangs in that window = quiet
+    lull_motion=6.0,     # median motion below this = still picture
+    lull_min=20.0,       # a lull must last at least this long to count as a break
 )
 
 
@@ -191,6 +197,21 @@ def wide_similarity(z, mm, mat, dark) -> np.ndarray:
 
 
 # ----------------------------------------------------------------------- detection
+def lulls(mm: np.ndarray, clangs: np.ndarray) -> np.ndarray:
+    """Frames inside a sustained still + silent stretch (a break with no wide shot)."""
+    n = len(mm)
+    per = np.bincount(np.clip((clangs * FPS).astype(int), 0, n - 1), minlength=n)
+    w = int(P["lull_win"] * FPS)
+    near = np.convolve(per, np.ones(2 * w + 1), mode="same")
+    m = (near <= P["lull_clangs"]) & (mm < P["lull_motion"])
+    m = median_filter(m.astype(np.uint8), 9).astype(bool)
+    out = np.zeros(n, bool)
+    for a, b in runs(m):
+        if (b - a) / FPS >= P["lull_min"]:
+            out[a:b] = True
+    return out
+
+
 def detect(F: dict) -> list[dict]:
     """Rounds = stretches between break shots (wide / dark) that contain sustained
     action AND weapon clangs. Edges come from the director's cuts to/from the wide
@@ -200,7 +221,8 @@ def detect(F: dict) -> list[dict]:
     is_dark = dark > P["dark_frac"]
     static_wide = (mm < 3) & (mat < 0.05) & (dark > 0.45) & (dark < 0.8)
     wide = median_filter(((sim > P["wide_sim"]) | static_wide).astype(np.uint8), 9).astype(bool)
-    close = ~wide & ~is_dark
+    lull = lulls(mm, clangs)                             # breaks that never cut to wide
+    close = ~wide & ~lull & ~is_dark
 
     cands = []
     for a, b in runs(close):
@@ -233,9 +255,22 @@ def detect(F: dict) -> list[dict]:
         else:
             merged.append([s, e])
 
-    def gap_info(pe: float, s: float) -> tuple[float, bool]:
+    # Broadcast style. Some directors always cut to the wide shot between rounds
+    # (then a gap without it is intros/interviews = new fight). Others often stay on
+    # a cage-side camera (then a still, silent gap is a round break too, and fights
+    # are told apart by the entrance between them).
+    def frac(mask, pe, s):
         g = slice(int(pe * FPS), int(s * FPS))
-        return (wide[g].mean() if s > pe else 1.0), bool(is_dark[g].any())
+        return mask[g].mean() if s > pe else 1.0
+
+    plain = [(pe, s) for (_, pe), (s, _) in zip(merged, merged[1:])
+             if not is_dark[int(pe * FPS):int(s * FPS)].any()]
+    wide_style = not plain or np.median([frac(wide, pe, s) for pe, s in plain]) >= 0.5
+    brk = wide if wide_style else (wide | lull)
+    print(f"[analyze] broadcast style: {'wide shot between rounds' if wide_style else 'cage-side breaks (no wide shot)'}")
+
+    def gap_info(pe: float, s: float) -> tuple[float, bool]:
+        return frac(brk, pe, s), bool(is_dark[int(pe * FPS):int(s * FPS)].any())
 
     # Walk-outs / intros: a short piece that runs into the next segment with no
     # break shot and no entrance between them is pre-fight footage, not a round.
@@ -258,7 +293,7 @@ def detect(F: dict) -> list[dict]:
         else:
             ps, pe = kept[i - 1]
             wf, dk = gap_info(pe, s)
-            if dk or wf < P["break_wide"] or s - pe > P["new_fight_gap"]:
+            if dk or s - pe > P["new_fight_gap"] or (wide_style and wf < P["break_wide"]):
                 fight, rnd = fight + 1, 1
             else:
                 rnd += 1

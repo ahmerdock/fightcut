@@ -85,6 +85,7 @@ Rules applied on top of those signals:
 - A wide shot shorter than 45 s is a referee stoppage, so the round continues.
 - Round 1 has no wide shot before it, so it starts about 2 s before the first burst of clangs. This skips the walk-out and the face-off.
 - A new fight starts after an entrance, or after a gap that is mostly introductions or interviews rather than the wide shot.
+- Some broadcasts don't cut to the wide shot between rounds. They stay on a cage-side camera while the corners work. A still, silent stretch of 20 s or more (no clangs) also counts as a break. `analyze` prints which style it detected. With cage-side breaks, fights are separated by entrances only.
 
 The detection settings are in the `P = dict(...)` block at the top of `fightcut.py`. Each one has a short comment. They were tuned on the Portland, June 27 2026 event, so a production with a different look may need small adjustments.
 
@@ -92,4 +93,6 @@ The detection settings are in the `P = dict(...)` block at the top of `fightcut.
 
 - **The video stops partway through, or the minute count in `analyze` is too short.** The download is probably incomplete. A complete 3-hour file at this quality is about 14–15 GB. Download it again and re-run `analyze`.
 - **A round is missing or split in two.** Fix the times in `cutlist.csv` and render again. Paste the `analyze` table into an issue or chat so the settings can be adjusted.
+- **Rounds run on into post-fight celebrations or interviews.** Applause can register as clangs, so the end of a fight's last round is the row most likely to need trimming. Events with cage-side breaks (`analyze` reports the style) need a closer review than events that cut to the wide shot.
+- **A second camera angle of the same event.** If the file has the same duration and audio as one already done, reuse that event's reviewed cut list: `render "camera 2.mp4" --cutlist "work/<camera 1 name>/cutlist.csv"`.
 - **The fight or round labels are off but the footage is right.** Labels only affect the CSV and the review image names. The rendered video plays the kept rows in order either way.
