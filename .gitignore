@@ -13,5 +13,10 @@ work/
 *.m4v
 *.wav
 
+# Client frames, annotation exports and delivery ZIPs
+*.png
+*.zip
+annotations.xml
+
 # macOS
 .DS_Store

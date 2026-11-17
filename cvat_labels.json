@@ -1,0 +1,30 @@
+[
+  {"name": "sword", "type": "rectangle", "color": "#e6194b", "attributes": []},
+  {"name": "axe", "type": "rectangle", "color": "#f58231", "attributes": []},
+  {"name": "mace", "type": "rectangle", "color": "#911eb4", "attributes": []},
+  {"name": "shield", "type": "rectangle", "color": "#4363d8", "attributes": []},
+  {
+    "name": "weapon_points",
+    "type": "skeleton",
+    "color": "#3cb44b",
+    "attributes": [],
+    "sublabels": [
+      {"name": "handle_end", "type": "points", "color": "#ffe119", "attributes": []},
+      {"name": "striking_end", "type": "points", "color": "#f032e6", "attributes": []}
+    ],
+    "svg": "<line x1=\"30\" y1=\"80\" x2=\"70\" y2=\"20\" data-type=\"edge\" data-node-from=\"1\" data-node-to=\"2\"></line><circle r=\"1.5\" cx=\"30\" cy=\"80\" data-type=\"element node\" data-element-id=\"1\" data-node-id=\"1\" data-label-name=\"handle_end\"></circle><circle r=\"1.5\" cx=\"70\" cy=\"20\" data-type=\"element node\" data-element-id=\"2\" data-node-id=\"2\" data-label-name=\"striking_end\"></circle>"
+  },
+  {
+    "name": "shield_points",
+    "type": "skeleton",
+    "color": "#42d4f4",
+    "attributes": [],
+    "sublabels": [
+      {"name": "top", "type": "points", "color": "#ffe119", "attributes": []},
+      {"name": "bottom", "type": "points", "color": "#f032e6", "attributes": []},
+      {"name": "left", "type": "points", "color": "#bfef45", "attributes": []},
+      {"name": "right", "type": "points", "color": "#fabed4", "attributes": []}
+    ],
+    "svg": "<line x1=\"50\" y1=\"10\" x2=\"50\" y2=\"90\" data-type=\"edge\" data-node-from=\"1\" data-node-to=\"2\"></line><line x1=\"15\" y1=\"45\" x2=\"85\" y2=\"45\" data-type=\"edge\" data-node-from=\"3\" data-node-to=\"4\"></line><circle r=\"1.5\" cx=\"50\" cy=\"10\" data-type=\"element node\" data-element-id=\"1\" data-node-id=\"1\" data-label-name=\"top\"></circle><circle r=\"1.5\" cx=\"50\" cy=\"90\" data-type=\"element node\" data-element-id=\"2\" data-node-id=\"2\" data-label-name=\"bottom\"></circle><circle r=\"1.5\" cx=\"15\" cy=\"45\" data-type=\"element node\" data-element-id=\"3\" data-node-id=\"3\" data-label-name=\"left\"></circle><circle r=\"1.5\" cx=\"85\" cy=\"45\" data-type=\"element node\" data-element-id=\"4\" data-node-id=\"4\" data-label-name=\"right\"></circle>"
+  }
+]
