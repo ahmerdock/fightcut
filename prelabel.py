@@ -135,7 +135,7 @@ def cmd_segment(a) -> None:
                 if not h.get("nobox"):
                     kw["bboxes"] = [h["box"]]
                 r = model(str(img_dir / name), **kw)[0]
-                mask = r.masks.data[0].cpu().numpy().astype(bool) if r.masks is not None else None
+                mask = r.masks.data[0].cpu().numpy().astype(bool) if r.masks is not None and len(r.masks.data) else None
             # keep the cut-out inside the hint box (plus a margin): SAM sometimes spills into the arm
             mg = a.margin
             clip = np.zeros((H, W), bool)

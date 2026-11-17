@@ -66,9 +66,11 @@ def probe(video: Path) -> tuple[float, float]:
 def decode_window(video: Path, t0: float, n: int, start: float) -> tuple[np.ndarray, np.ndarray]:
     """Decode n frames from position t0 as small greyscale images.
     Returns (positions in seconds from the start of the file, frames). -ss seeks by
-    position, while pts carry the container start_time, so subtract it back out."""
+    position, while pts carry the container start_time, so subtract it back out.
+    -fps_mode passthrough: raw output would otherwise duplicate frames to fill timestamp gaps,
+    and the duplicates have no showinfo line, shifting every later frame against its pts."""
     p = subprocess.run(["ffmpeg", "-nostdin", "-v", "info", "-copyts", "-ss", f"{t0:.4f}", "-i", str(video),
-                        "-frames:v", str(n), "-an",
+                        "-frames:v", str(n), "-an", "-fps_mode", "passthrough",
                         "-vf", f"scale={PW}:{PH},format=gray,showinfo",
                         "-f", "rawvideo", "-pix_fmt", "gray", "-"],
                        capture_output=True, check=True)
