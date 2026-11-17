@@ -15,6 +15,15 @@ Rules agreed with the client for the 50-frame pilot. Apply them to every frame.
     --cam "B=work/<camera 2>/<camera 2> - rounds only.mp4" \
     --cutlist "work/<camera 1>/cutlist.csv" --fights 1-5 --out work/octopi_weapons_pilot_50
   ```
+- If a camera's video was rendered from its own cut list (e.g. Sioux Falls Camera 2 covers only fights 5–8), give each camera its cut list. Fights missing from a camera's cut list are skipped for that camera:
+  ```bash
+  .venv/bin/python framegrab.py extract \
+    --cam "A=work/<camera 1>/<camera 1> - rounds only.mp4" \
+    --cam "B=work/<camera 2>/<camera 2> - rounds only.mp4" \
+    --cutlist "A=work/<camera 1>/cutlist.csv" --cutlist "B=work/<camera 2>/cutlist.csv" \
+    --fights 1-8 --out work/octopi_weapons_sioux_falls_60
+  ```
+  Check with `--expect <frame count>` when the total is not 50.
 
 ## Labels (`cvat_labels.json`)
 

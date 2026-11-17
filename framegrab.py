@@ -99,21 +99,41 @@ def cmd_extract(a) -> None:
     lo, _, hi = a.fights.partition("-")
     fights = list(range(int(lo), int(hi or lo) + 1))
     pcts = [float(x) for x in a.pcts.split(",")]
-    spans = fight_spans(Path(a.cutlist), a.pad)
-    missing = [f for f in fights if f not in spans]
+    # one cut list for every camera, or NAME=path for a camera whose video was rendered from its own
+    lists = {}
+    for c in a.cutlist:
+        name, eq, path = c.partition("=")
+        lists[name if eq else None] = Path(path if eq else c)
+    if any(n not in cams for n in lists if n):
+        sys.exit(f"--cutlist names a camera not given with --cam: {[n for n in lists if n and n not in cams]}")
+    spans_of = {}
+    for cam in cams:
+        if cam not in lists and None not in lists:
+            sys.exit(f"no cut list for camera {cam}")
+        spans_of[cam] = fight_spans(lists.get(cam, lists.get(None)), a.pad)
+    missing = [f for f in fights if not any(f in s for s in spans_of.values())]
     if missing:
-        sys.exit(f"fights not in cut list: {missing}")
+        sys.exit(f"fights not in any cut list: {missing}")
+    for cam, s in spans_of.items():
+        skip = [f for f in fights if f not in s]
+        if skip:
+            print(f"[extract] cam{cam}: no fights {skip} in its video, skipped")
 
     out = Path(a.out)
     img_dir = out / "images"
     img_dir.mkdir(parents=True, exist_ok=True)
     manifest = []
     for f in fights:
-        f0, f1 = spans[f]
-        print(f"[extract] fight {f}: {f0:.2f}–{f1:.2f}s in processed video ({f1 - f0:.1f}s)")
+        for cam, s in spans_of.items():
+            if f in s:
+                print(f"[extract] fight {f} cam{cam}: {s[f][0]:.2f}–{s[f][1]:.2f}s in processed video "
+                      f"({s[f][1] - s[f][0]:.1f}s)")
         for p in pcts:
-            target = f0 + p / 100 * (f1 - f0)
             for cam, video in cams.items():
+                if f not in spans_of[cam]:
+                    continue
+                f0, f1 = spans_of[cam][f]
+                target = f0 + p / 100 * (f1 - f0)
                 fps, start = probe(video)
                 w0 = max(f0, target - a.search)
                 n = int(round((min(f1, target + a.search) - w0) * fps)) + 1
@@ -211,7 +231,9 @@ def main() -> None:
     sub = ap.add_subparsers(dest="cmd", required=True)
     ex = sub.add_parser("extract", help="grab frames at percentages of each fight")
     ex.add_argument("--cam", action="append", required=True, help="NAME=video.mp4 (repeat per camera)")
-    ex.add_argument("--cutlist", required=True, help="cut list the videos were rendered from")
+    ex.add_argument("--cutlist", action="append", required=True,
+                    help="cut list the videos were rendered from; NAME=path for a camera with its own "
+                         "(repeatable). Fights missing from a camera's cut list are skipped for that camera")
     ex.add_argument("--fights", default="1-5", help="fight range, e.g. 1-5")
     ex.add_argument("--pcts", default="10,30,50,70,90", help="percentages of elapsed fight time")
     ex.add_argument("--pad", type=float, default=1.0, help="--pad used at render time (default 1)")
